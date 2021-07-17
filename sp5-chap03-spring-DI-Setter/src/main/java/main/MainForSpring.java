@@ -1,15 +1,22 @@
 package main;
 
-import assembler.Assembler; // Spring이 아닌 Assembler 방식
+import config.AppCtx;
+import jdk.nashorn.internal.runtime.Version;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import spring.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class MainForAssembler {
+public class MainForSpring {
+
+    private static ApplicationContext ctx=null;
 
     public static void main(String[] args) throws IOException{
+        ctx=new AnnotationConfigApplicationContext(AppCtx.class);
+
         BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
 
         while(true){
@@ -28,11 +35,21 @@ public class MainForAssembler {
                 processChangeCommand(command.split(" "));
                 continue;
             }
+            else if(command.equals("list")){
+                processListCommand();
+                continue;
+            }
+            else if(command.startsWith("info ")){
+                processInfoCommand(command.split(" "));
+                continue;
+            }
+            else if(command.equals("version")){
+                processVersionCommand();
+                continue;
+            }
             printHelp();
         }
     }
-
-    private static Assembler assembler=new Assembler();
 
     private static void processNewCommand(String[] arg) {
 
@@ -41,7 +58,8 @@ public class MainForAssembler {
             return;
         }
 
-        MemberRegisterService regSvc=assembler.getMemberRegisterService();
+        MemberRegisterService regSvc=ctx.getBean("memberRegSvc", MemberRegisterService.class);
+
         RegisterRequest req=new RegisterRequest();
         req.setEmail(arg[1]);
         req.setName(arg[2]);
@@ -68,7 +86,7 @@ public class MainForAssembler {
             return;
         }
 
-        ChangePasswordService changePwdSvc=assembler.getChangePasswordService();
+        ChangePasswordService changePwdSvc=ctx.getBean("changePwdSvc", ChangePasswordService.class);
 
         try{
             changePwdSvc.changePassword(arg[1], arg[2], arg[3]);
@@ -91,4 +109,24 @@ public class MainForAssembler {
         System.out.println();
     }
 
+    private static void processListCommand(){
+        MemberListPrinter listPrinter=
+                ctx.getBean("listPrinter", MemberListPrinter.class);
+        listPrinter.printAll();
+    }
+
+    private static void processInfoCommand(String[] arg){
+        if(arg.length!=2){
+            printHelp();
+            return;
+        }
+        MemberInfoPrinter infoPrinter=
+                ctx.getBean("infoPrinter", MemberInfoPrinter.class);
+        infoPrinter.printMemberInfo(arg[1]);
+    }
+
+    private static void processVersionCommand(){
+        VersionPrinter versionPrinter=ctx.getBean("versionPrinter", VersionPrinter.class);
+        versionPrinter.print();
+    }
 }
