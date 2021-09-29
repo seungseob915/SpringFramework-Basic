@@ -1,5 +1,6 @@
 package config;
 
+import interceptor.AuthCheckInterceptor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +34,17 @@ public class MvcConfig implements WebMvcConfigurer {
         ms.setBasenames("message.label");       // resources - message - label 프로퍼티 로드.  setBasenames 내 파라미터는 가변 인자로 여러 프로퍼티 파일 로드시 콤마(,)로 구분
         ms.setDefaultEncoding("UTF-8");
         return ms;
+    }
+    
+    // HandlerInterceptor 적용을 위한 설정
+    @Override
+    public void addInterceptors(InterceptorRegistry registry){
+        registry.addInterceptor(authCheckInterceptor()).addPathPatterns("/edit/**").excludePathPatterns("/edit/help/**");
+    }
+
+    @Bean
+    public AuthCheckInterceptor authCheckInterceptor(){
+        return new AuthCheckInterceptor();
     }
 
 }
